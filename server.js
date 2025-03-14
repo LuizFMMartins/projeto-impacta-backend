@@ -101,3 +101,55 @@ app.put('/atualizarProntuario', async (req, res) => {
   }
 });
 
+app.post('/agendamentos/novo', async (req, res) => {
+  const { pacienteCpf, data, horario, motivo } = req.body;
+
+  try {
+    await pool.query(
+      'INSERT INTO agendamentos (pacienteCpf, data, horario, motivo) VALUES ($1, $2, $3, $4)',
+      [pacienteCpf, data, horario, motivo]
+    );
+    res.status(201).json({ message: 'Consulta agendada com sucesso!' });
+  } catch (error) {
+    res.status(500).json({ message: 'Erro ao agendar consulta', error });
+  }
+});
+
+app.get('/agendamentos/listar', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM agendamentos');
+    res.status(200).json(result.rows);
+  } catch (error) {
+    res.status(500).json({ message: 'Erro ao buscar agendamentos', error });
+  }
+});
+
+app.post('/contato/salvar', async (req, res) => {
+  const { endereco, telefone, whatsapp, email,informacoes } = req.body;
+  
+  try {
+    const result = await pool.query(
+      'UPDATE contato SET endereco = $1, telefone = $2, whatsapp = $3, email = $4, informacoes = $5 WHERE id = 1', // Usando um ID fixo para exemplo (substitua conforme necessário)
+      [endereco, telefone, whatsapp, email, informacoes] // Corrigido para enviar todos os 5 valores
+    );
+    console.log('req----',result.rowCount)
+    if (result.rowCount > 0) {
+      res.status(200).json({ message: 'Contato alterado com sucesso!' });
+    } else {
+      res.status(404).json({ message: 'Contato não encontrado para atualização.' });
+    }
+  } catch (error) {
+    console.log("err------",error)
+    res.status(500).json({ message: 'Erro ao alterar contato', error });
+  }
+});
+
+app.get('/contato/buscar', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM contato');
+    res.status(200).json(result.rows);
+  } catch (error) {
+    res.status(500).json({ message: 'Erro ao buscar contato', error });
+  }
+});
+
