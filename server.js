@@ -124,6 +124,41 @@ app.get('/agendamentos/listar', async (req, res) => {
   }
 });
 
+app.get('/agendamentos/consultas', async (req, res) => {
+  const { cpf, role } = req.query;
+console.log('teste---------',req.query)
+  try {
+    let query;
+    let params = [];
+
+    if (role === 'admin') {
+      query = `
+        SELECT a.*, u.nome AS nome_paciente
+        FROM agendamentos a
+        JOIN users u ON a.pacienteCpf = u.cpf
+        ORDER BY a.data, a.horario
+      `;
+    } else {
+      query = `
+        SELECT a.*, u.nome AS nome_paciente
+        FROM agendamentos a
+        JOIN users u ON a.pacienteCpf = u.cpf
+        WHERE a.pacienteCpf = $1
+        ORDER BY a.data, a.horario
+      `;
+      params = [cpf];
+    }
+
+    const result = await pool.query(query, params);
+    res.status(200).json(result.rows);
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Erro ao buscar consultas', error });
+  }
+});
+
+
 app.post('/contato/salvar', async (req, res) => {
   const { endereco, telefone, whatsapp, email,informacoes } = req.body;
   
@@ -152,4 +187,18 @@ app.get('/contato/buscar', async (req, res) => {
     res.status(500).json({ message: 'Erro ao buscar contato', error });
   }
 });
+const pacientesRoutes = require('./routes/prontuario.routes');
+app.use('/api/prontuario', pacientesRoutes);
+
+app.delete('/agendamentos/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    await pool.query('DELETE FROM agendamentos WHERE id = $1', [id]);
+    res.status(200).json({ message: 'Consulta excluída com sucesso' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Erro ao excluir consulta' });
+  }
+});
+
 

@@ -30,4 +30,32 @@ router.get('/prontuario/:cpf', async (req, res) => {
   }
 });
 
+
+router.post('/', async (req, res) => {
+  const { data, hora, cpfPaciente, outrosCampos } = req.body;
+
+  try {
+    const pacienteResult = await db.query(
+      'SELECT id FROM pacientes WHERE cpf = $1',
+      [cpfPaciente]
+    );
+
+    if (pacienteResult.rows.length === 0) {
+      return res.status(404).json({ mensagem: 'Paciente não encontrado' });
+    }
+
+    const pacienteId = pacienteResult.rows[0].id;
+
+    await db.query(
+      'INSERT INTO agendamentos (data, hora, paciente_id, ...) VALUES ($1, $2, $3, ...)',
+      [data, hora, pacienteId /* outros valores */]
+    );
+
+    res.status(201).json({ mensagem: 'Agendamento criado com sucesso' });
+  } catch (error) {
+    console.error('Erro ao criar agendamento:', error);
+    res.status(500).json({ mensagem: 'Erro no servidor' });
+  }
+});
+
 module.exports = router;
